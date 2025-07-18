@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Inside Iframe</title>
+</head>
+<body>
+  <h2>Inside iframe</h2>
+  <div id="player"></div>
+
+  <script>
+    // Load YouTube API script dynamically
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+
+    let player;
+
+    // YouTube API callback
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: '360',
+        width: '640',
+        videoId: 'rhuOfaAyhPs', // Replace with your video ID
+        playerVars: {
+          'autoplay': 1,
+          'controls': 1,
+          'origin': window.location.origin // Important to avoid CORS issues
+        },
+        events: {
+          'onReady': function (event) {
+            event.target.playVideo();
+          },
+          'onError': function (event) {
+            console.error('YouTube Error:', event.data);
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
