@@ -1,42 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>YouTube Inside Iframe</title>
+    <meta charset="utf-8">
+    <title>Youtube</title>
+    <link rel="icon" href="./favicon.png" type="image/png" sizes="32x32">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript" src="./log.js"></script>
 </head>
 <body>
-  <h2>Inside iframe</h2>
-  <div id="player"></div>
-
-  <script>
-    // Load YouTube API script dynamically
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
-
-    let player;
-
-    // YouTube API callback
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('player', {
-        height: '360',
-        width: '640',
-        videoId: 'rhuOfaAyhPs', // Replace with your video ID
-        playerVars: {
-          'autoplay': 1,
-          'controls': 1,
-          'origin': window.location.origin // Important to avoid CORS issues
-        },
-        events: {
-          'onReady': function (event) {
-            event.target.playVideo();
-          },
-          'onError': function (event) {
-            console.error('YouTube Error:', event.data);
-          }
-        }
-      });
-    }
-  </script>
+    <div id="container" class="player"></div>
+    <script type="text/javascript" src="./command.js"></script>
+    <script type="text/javascript" src="./player.js"></script>
+    <script type="text/javascript" src="./y24e6654.js"></script>
 </body>
 </html>
