@@ -1,7 +1,6 @@
 let containerElement = document.getElementById("container"); // Container element
 let playerElement = void 0; // Player element node
 let player = void 0; // Player instance
-let isPaused = false;
 
 let src = "";
 let startTime = 0;
@@ -9,91 +8,81 @@ let startTime = 0;
 let isApiReady = false;
 window.onYouTubeIframeAPIReady = function() {
     isApiReady = true;
-    if (isApiReady && isSrcLoading) {
+    if (isApiReady && isApiLoading) {
         loadPlayer(src, startTime);
     }
 };
 
-let isSrcLoading = false;
+let isApiLoading = false;
 
 const postCommand = (command, data) => {
-    try {
-        window.parent.postMessage({
-            type: YOUTUBE_COMMAND.CODE,
-            command: command,
-            data: data
-        }, "*");
-    } catch (err) {}
+    window.parent.postMessage({
+        type: YOUTUBE_COMMAND.CODE,
+        command: command,
+        data: data
+    }, "*");
 }
 
 const handleMessage = (event) => {
-    try {
-        const data = event.data;
-        if (data.type !== YOUTUBE_COMMAND.CODE) return;
-        // postLog(data);
-        const payload = data.data;
-        switch (data.command) {
-            case YOUTUBE_COMMAND.TO_IFRAME.LOAD:
-                isSrcLoading = true;
-                try {
-                    // Reset
-                    src = payload.src || "";
-                    startTime = payload.startTime || 0;
-                    lang = payload.lang || void 0;
-                } catch (err) {}
-                if (isApiReady && isSrcLoading) {
-                    loadPlayer(src, startTime, lang);
-                }
-                break;
-            case YOUTUBE_COMMAND.TO_IFRAME.UNLOAD:
-                isSrcLoading = false;
-                unloadPlayer();
-                break;
-            case YOUTUBE_COMMAND.TO_IFRAME.PLAY:
-                try {
-                    player.playVideo();
-                } catch (err) {}
-                break;
-            case YOUTUBE_COMMAND.TO_IFRAME.PAUSE:
-                try {
-                    player.pauseVideo();
-                } catch (err) {}
-                break;
-            case YOUTUBE_COMMAND.TO_IFRAME.SET_CURRENT_TIME:
-                try {
-                    player.seekTo(payload.timeS);
-                } catch (err) {}
-                break;
-            case YOUTUBE_COMMAND.TO_IFRAME.SET_PLAYBACK_RATE:
-                try {
-                    player.setPlaybackRate(payload.value);
-                } catch (err) {}
-                break;
-        }
-    } catch (err) {}
+    const data = event.data;
+    if (data.type !== YOUTUBE_COMMAND.CODE) return;
+    switch (data.command) {
+        case YOUTUBE_COMMAND.TO_IFRAME.LOAD:
+            isApiLoading = true;
+            try {
+                // Reset
+                src = data.src || "";
+                startTime = data.startTime || 0;
+            } catch (err) {}
+            if (isApiReady && isApiLoading) {
+                loadPlayer(src, startTime);
+            }
+            break;
+        case YOUTUBE_COMMAND.TO_IFRAME.UNLOAD:
+            isApiLoading = false;
+            unloadPlayer();
+            break;
+        case YOUTUBE_COMMAND.TO_IFRAME.PLAY:
+            try {
+                player.playVideo();
+            } catch (err) {}
+            break;
+        case YOUTUBE_COMMAND.TO_IFRAME.PAUSE:
+            try {
+                player.pauseVideo();
+            } catch (err) {}
+            break;
+        case YOUTUBE_COMMAND.TO_IFRAME.SET_CURRENT_TIME:
+            try {
+                player.seekTo(data.timeS);
+            } catch (err) {}
+            break;
+        case YOUTUBE_COMMAND.TO_IFRAME.SET_PLAYBACK_RATE:
+            try {
+                player.setPlaybackRate(data.value);
+            } catch (err) {}
+            break;
+    }
 }
 
 window.addEventListener("message", handleMessage);
 
-const getConfigure = (src, startTime, lang) => {
-    try {
-        return {
-            width: containerElement.offsetWidth,
-            height: containerElement.offsetHeight,
-            // videoId: src,
-            videoId: "rhuOfaAyhPs",
-            playerVars: {
-                autoplay: 1, // Auto playback
-                controls: 0, // Hide youtube control bar
-                enablejsapi: 0, // Disable youtube key controls
-                hl: lang,
-                iv_load_policy: 3, // Cause video annotations to not be shown by default
-                rel: 0, // Minimum display related movie
-                start: startTime || void 0 // Start time
-            }
+const getConfigure = (src, startTime) => {
+    return {
+        width: containerElement.offsetWidth,
+        height: containerElement.offsetHeight,
+        videoId: src,
+        // videoId: "rhuOfaAyhPs",
+        playerVars: {
+            autoplay: 1, // Auto playback
+            controls: 0, // Hide youtube control bar
+            enablejsapi: 0, // Disable youtube key controls
+            hl: LANGUAGE,
+            iv_load_policy: 3, // Cause video annotations to not be shown by default
+            rel: 0, // Minimum display related movie
+            start: startTime || void 0 // Start time
         }
-    } catch (err) {}
-    return void 0;
+    }
 }
 
 let timeoutUpdateTime = void 0;
@@ -104,15 +93,13 @@ const startUpdateTime = () => {
 }
 const updateTime = () => {
     try {
-        if (!isPaused) {
-            const currentTime = player.getCurrentTime();
-            const duration = player.getDuration();
-            const data = {
-                currentTime: currentTime,
-                duration: duration
-            }
-            postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_TIME, data);
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        const data = {
+            currentTime: currentTime,
+            duration: duration
         }
+        postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_TIME, data);
     } catch (err) {}
     clearTimeout(timeoutUpdateTime);
     timeoutUpdateTime = setTimeout(() => {
@@ -124,32 +111,27 @@ const stopUpdateTime = () => {
     timeoutUpdateTime = void 0;
 }
 
-const loadPlayer = (src, startTime, lang) => {
+const loadPlayer = ({ src, startTime }) => {
     try {
         if (!src) {
             eventError({ data: 2213 });
-            return;
         }
     } catch (err) {}
     try {
         unloadPlayer(); // Ensure clean init
     } catch (err) {}
     try {
-        // Reset variable
-        isPaused = false;
-
         // Create player element
         try {
-            const newElement = document.createElement("div");
-            newElement.className = "player";
-            if (containerElement) {
-                containerElement.appendChild(newElement);
-                playerElement = newElement;
+            const playerElement = document.createElement("div");
+            playerElement.className = "player";
+            if (this._.containerElement) {
+                this._.containerElement.appendChild(playerElement);
+                this._.playerElement = playerElement;
             }
         } catch (err) {}
-
         // Create new player
-        const configure = getConfigure(src, startTime, lang);
+        const configure = getConfigure(src, startTime);
         try {
             player = new YT.Player(playerElement, configure);
         } catch (err) {
@@ -192,18 +174,18 @@ const unloadPlayer = () => {
 
 const addEventListener = () => {
     try {
-        player.addEventListener("onReady", eventReady);
-        player.addEventListener("onStateChange", eventStateChange);
-        player.addEventListener("onPlaybackQualityChange", eventQualityChange);
-        player.addEventListener("onError", eventError);
+        this._.player.addEventListener("onReady", this._.eventReady);
+        this._.player.addEventListener("onStateChange", this._.eventStateChange);
+        this._.player.addEventListener("onPlaybackQualityChange", this._.eventQualityChange);
+        this._.player.addEventListener("onError", this._.eventError);
     } catch (err) {}
 };
 const removeEventListener = () => {
     try {
-        player.removeEventListener("onReady", eventReady);
-        player.removeEventListener("onStateChange", eventStateChange);
-        player.removeEventListener("onPlaybackQualityChange", eventQualityChange);
-        player.removeEventListener("onError", eventError);
+        this._.player.removeEventListener("onReady", this._.eventReady);
+        this._.player.removeEventListener("onStateChange", this._.eventStateChange);
+        this._.player.removeEventListener("onPlaybackQualityChange", this._.eventQualityChange);
+        this._.player.removeEventListener("onError", this._.eventError);
     } catch (err) {}
 };
 
@@ -224,8 +206,8 @@ const eventStateChange = (e) => {
         switch (e.data) {
             case YOUTUBE_STATE.UNSTARTED: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.UNSTARTED }); break;
             case YOUTUBE_STATE.ENDED: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.ENDED }); break;
-            case YOUTUBE_STATE.PLAYING: isPaused = false; postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.PLAYING }); break;
-            case YOUTUBE_STATE.PAUSED: isPaused = true; postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.PAUSED }); break;
+            case YOUTUBE_STATE.PLAYING: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.PLAYING }); break;
+            case YOUTUBE_STATE.PAUSED: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.PAUSED }); break;
             case YOUTUBE_STATE.BUFFERING: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.BUFFERING }); break;
         }
     } catch (err) {}
@@ -244,5 +226,3 @@ const eventError = (e) => {
 window.addEventListener("unload", () => {
     window.removeEventListener("message", handleMessage);
 });
-
-postCommand(YOUTUBE_COMMAND.FROM_IFRAME.IFRAME_READY, {});
