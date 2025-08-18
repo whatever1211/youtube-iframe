@@ -1,12 +1,12 @@
-var containerElement = document.getElementById("container"); // Container element
-var playerElement = void 0; // Player element node
-var player = void 0; // Player instance
-var isPaused = false;
+let containerElement = document.getElementById("container"); // Container element
+let playerElement = void 0; // Player element node
+let player = void 0; // Player instance
+let isPaused = false;
 
-var src = "";
-var startTime = 0;
+let src = "";
+let startTime = 0;
 
-var isApiReady = false;
+let isApiReady = false;
 window.onYouTubeIframeAPIReady = function() {
     isApiReady = true;
     if (isApiReady && isSrcLoading) {
@@ -14,9 +14,9 @@ window.onYouTubeIframeAPIReady = function() {
     }
 };
 
-var isSrcLoading = false;
+let isSrcLoading = false;
 
-function postCommand(command, data) {
+const postCommand = (command, data) => {
     try {
         window.parent.postMessage({
             type: YOUTUBE_COMMAND.CODE,
@@ -24,14 +24,14 @@ function postCommand(command, data) {
             data: data
         }, "*");
     } catch (err) {}
-};
+}
 
-function handleMessage(event) {
+const handleMessage = (event) => {
     try {
-        var data = event.data;
+        const data = event.data;
         if (data.type !== YOUTUBE_COMMAND.CODE) return;
         // postLog(data);
-        var payload = data.data;
+        const payload = data.data;
         switch (data.command) {
             case YOUTUBE_COMMAND.TO_IFRAME.LOAD:
                 isSrcLoading = true;
@@ -41,7 +41,7 @@ function handleMessage(event) {
                     startTime = payload.startTime || 0;
                     lang = payload.lang || void 0;
                 } catch (err) {}
-                    if (isApiReady && isSrcLoading) {
+                if (isApiReady && isSrcLoading) {
                     loadPlayer(src, startTime, lang);
                 }
                 break;
@@ -71,11 +71,11 @@ function handleMessage(event) {
                 break;
         }
     } catch (err) {}
-};
+}
 
 window.addEventListener("message", handleMessage);
 
-function getConfigure(src, startTime, lang) {
+const getConfigure = (src, startTime, lang) => {
     try {
         return {
             width: containerElement.offsetWidth,
@@ -91,40 +91,40 @@ function getConfigure(src, startTime, lang) {
                 rel: 0, // Minimum display related movie
                 start: startTime || void 0 // Start time
             }
-        };
+        }
     } catch (err) {}
     return void 0;
-};
+}
 
-var timeoutUpdateTime = void 0;
-var UPDATE_TIME_INTERVAL = 500; // 500ms
-function startUpdateTime() {
+let timeoutUpdateTime = void 0;
+const UPDATE_TIME_INTERVAL = 500; // 500ms
+const startUpdateTime = () => {
     stopUpdateTime();
     updateTime();
-};
-var updateTime = function updateTime() {
+}
+const updateTime = () => {
     try {
         if (!isPaused) {
-            var currentTime = player.getCurrentTime();
-            var duration = player.getDuration();
-            var data = {
+            const currentTime = player.getCurrentTime();
+            const duration = player.getDuration();
+            const data = {
                 currentTime: currentTime,
                 duration: duration
-            };
+            }
             postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_TIME, data);
         }
     } catch (err) {}
     clearTimeout(timeoutUpdateTime);
-    timeoutUpdateTime = setTimeout(function() {
+    timeoutUpdateTime = setTimeout(() => {
         updateTime();
     }, UPDATE_TIME_INTERVAL);
-};
-function stopUpdateTime() {
+}
+const stopUpdateTime = () => {
     clearTimeout(timeoutUpdateTime);
     timeoutUpdateTime = void 0;
-};
+}
 
-function loadPlayer(src, startTime, lang) {
+const loadPlayer = (src, startTime, lang) => {
     try {
         if (!src) {
             eventError({ data: 2213 });
@@ -140,7 +140,7 @@ function loadPlayer(src, startTime, lang) {
 
         // Create player element
         try {
-            var newElement = document.createElement("div");
+            const newElement = document.createElement("div");
             newElement.className = "player";
             if (containerElement) {
                 containerElement.appendChild(newElement);
@@ -149,7 +149,7 @@ function loadPlayer(src, startTime, lang) {
         } catch (err) {}
 
         // Create new player
-        var configure = getConfigure(src, startTime, lang);
+        const configure = getConfigure(src, startTime, lang);
         try {
             player = new YT.Player(playerElement, configure);
         } catch (err) {
@@ -163,9 +163,9 @@ function loadPlayer(src, startTime, lang) {
             addEventListener();
         } catch (err) {}
     } catch (err) {}
-};
+}
 
-function unloadPlayer() {
+const unloadPlayer = () => {
     try {
         removeEventListener();
     } catch (err) {}
@@ -188,9 +188,9 @@ function unloadPlayer() {
             playerElement = void 0;
         }
     } catch (err) {}
-};
+}
 
-function addEventListener() {
+const addEventListener = () => {
     try {
         player.addEventListener("onReady", eventReady);
         player.addEventListener("onStateChange", eventStateChange);
@@ -198,7 +198,7 @@ function addEventListener() {
         player.addEventListener("onError", eventError);
     } catch (err) {}
 };
-function removeEventListener() {
+const removeEventListener = () => {
     try {
         player.removeEventListener("onReady", eventReady);
         player.removeEventListener("onStateChange", eventStateChange);
@@ -208,7 +208,7 @@ function removeEventListener() {
 };
 
 // Events
-function eventReady(e) {
+const eventReady = (e) => {
     try {
         if (player.getDuration() === 0) {
             // When ready and player have not loaded data. The metadata duration of live is 0.
@@ -219,7 +219,7 @@ function eventReady(e) {
         startUpdateTime();
     } catch (err) {}
 };
-function eventStateChange(e) {
+const eventStateChange = (e) => {
     try {
         switch (e.data) {
             case YOUTUBE_STATE.UNSTARTED: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.UNSTARTED }); break;
@@ -230,18 +230,18 @@ function eventStateChange(e) {
         }
     } catch (err) {}
 };
-function eventQualityChange(e) {
+const eventQualityChange = (e) => {
     try {
         postCommand(YOUTUBE_COMMAND.FROM_IFRAME.QUALITY_CHANGE, { data: e.data });
     } catch (err) {}
 };
-var eventError = function eventError(e) {
+const eventError = (e) => {
     try {
         postCommand(YOUTUBE_COMMAND.FROM_IFRAME.ERROR, { error: e.data });
     } catch (err) {}
 };
 
-window.addEventListener("unload", function() {
+window.addEventListener("unload", () => {
     window.removeEventListener("message", handleMessage);
 });
 
