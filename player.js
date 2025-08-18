@@ -1,12 +1,12 @@
-let containerElement = document.getElementById("container"); // Container element
-let playerElement = void 0; // Player element node
-let player = void 0; // Player instance
-let isPaused = false;
+var containerElement = document.getElementById("container"); // Container element
+var playerElement = void 0; // Player element node
+var player = void 0; // Player instance
+var isPaused = false;
 
-let src = "";
-let startTime = 0;
+var src = "";
+var startTime = 0;
 
-let isApiReady = false;
+var isApiReady = false;
 window.onYouTubeIframeAPIReady = function() {
     isApiReady = true;
     if (isApiReady && isSrcLoading) {
@@ -14,9 +14,9 @@ window.onYouTubeIframeAPIReady = function() {
     }
 };
 
-let isSrcLoading = false;
+var isSrcLoading = false;
 
-const postCommand = (command, data) => {
+function postCommand(command, data) {
     try {
         window.parent.postMessage({
             type: YOUTUBE_COMMAND.CODE,
@@ -24,14 +24,14 @@ const postCommand = (command, data) => {
             data: data
         }, "*");
     } catch (err) {}
-}
+};
 
-const handleMessage = (event) => {
+function handleMessage(event) {
     try {
-        const data = event.data;
+        var data = event.data;
         if (data.type !== YOUTUBE_COMMAND.CODE) return;
         // postLog(data);
-        const payload = data.data;
+        var payload = data.data;
         switch (data.command) {
             case YOUTUBE_COMMAND.TO_IFRAME.LOAD:
                 isSrcLoading = true;
@@ -41,7 +41,7 @@ const handleMessage = (event) => {
                     startTime = payload.startTime || 0;
                     lang = payload.lang || void 0;
                 } catch (err) {}
-                if (isApiReady && isSrcLoading) {
+                    if (isApiReady && isSrcLoading) {
                     loadPlayer(src, startTime, lang);
                 }
                 break;
@@ -71,11 +71,11 @@ const handleMessage = (event) => {
                 break;
         }
     } catch (err) {}
-}
+};
 
 window.addEventListener("message", handleMessage);
 
-const getConfigure = (src, startTime, lang) => {
+function getConfigure(src, startTime, lang) {
     try {
         return {
             width: containerElement.offsetWidth,
@@ -91,40 +91,40 @@ const getConfigure = (src, startTime, lang) => {
                 rel: 0, // Minimum display related movie
                 start: startTime || void 0 // Start time
             }
-        }
+        };
     } catch (err) {}
     return void 0;
-}
+};
 
-let timeoutUpdateTime = void 0;
-const UPDATE_TIME_INTERVAL = 500; // 500ms
-const startUpdateTime = () => {
+var timeoutUpdateTime = void 0;
+var UPDATE_TIME_INTERVAL = 500; // 500ms
+function startUpdateTime() {
     stopUpdateTime();
     updateTime();
-}
-const updateTime = () => {
+};
+var updateTime = function updateTime() {
     try {
         if (!isPaused) {
-            const currentTime = player.getCurrentTime();
-            const duration = player.getDuration();
-            const data = {
+            var currentTime = player.getCurrentTime();
+            var duration = player.getDuration();
+            var data = {
                 currentTime: currentTime,
                 duration: duration
-            }
+            };
             postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_TIME, data);
         }
     } catch (err) {}
     clearTimeout(timeoutUpdateTime);
-    timeoutUpdateTime = setTimeout(() => {
+    timeoutUpdateTime = setTimeout(function() {
         updateTime();
     }, UPDATE_TIME_INTERVAL);
-}
-const stopUpdateTime = () => {
+};
+function stopUpdateTime() {
     clearTimeout(timeoutUpdateTime);
     timeoutUpdateTime = void 0;
-}
+};
 
-const loadPlayer = (src, startTime, lang) => {
+function loadPlayer(src, startTime, lang) {
     try {
         if (!src) {
             eventError({ data: 2213 });
@@ -140,7 +140,7 @@ const loadPlayer = (src, startTime, lang) => {
 
         // Create player element
         try {
-            const newElement = document.createElement("div");
+            var newElement = document.createElement("div");
             newElement.className = "player";
             if (containerElement) {
                 containerElement.appendChild(newElement);
@@ -149,7 +149,7 @@ const loadPlayer = (src, startTime, lang) => {
         } catch (err) {}
 
         // Create new player
-        const configure = getConfigure(src, startTime, lang);
+        var configure = getConfigure(src, startTime, lang);
         try {
             player = new YT.Player(playerElement, configure);
         } catch (err) {
@@ -163,9 +163,9 @@ const loadPlayer = (src, startTime, lang) => {
             addEventListener();
         } catch (err) {}
     } catch (err) {}
-}
+};
 
-const unloadPlayer = () => {
+function unloadPlayer() {
     try {
         removeEventListener();
     } catch (err) {}
@@ -188,9 +188,9 @@ const unloadPlayer = () => {
             playerElement = void 0;
         }
     } catch (err) {}
-}
+};
 
-const addEventListener = () => {
+function addEventListener() {
     try {
         player.addEventListener("onReady", eventReady);
         player.addEventListener("onStateChange", eventStateChange);
@@ -198,7 +198,7 @@ const addEventListener = () => {
         player.addEventListener("onError", eventError);
     } catch (err) {}
 };
-const removeEventListener = () => {
+function removeEventListener() {
     try {
         player.removeEventListener("onReady", eventReady);
         player.removeEventListener("onStateChange", eventStateChange);
@@ -208,7 +208,7 @@ const removeEventListener = () => {
 };
 
 // Events
-const eventReady = (e) => {
+function eventReady(e) {
     try {
         if (player.getDuration() === 0) {
             // When ready and player have not loaded data. The metadata duration of live is 0.
@@ -219,7 +219,7 @@ const eventReady = (e) => {
         startUpdateTime();
     } catch (err) {}
 };
-const eventStateChange = (e) => {
+function eventStateChange(e) {
     try {
         switch (e.data) {
             case YOUTUBE_STATE.UNSTARTED: postCommand(YOUTUBE_COMMAND.FROM_IFRAME.UPDATE_STATE, { state: YOUTUBE_STATE.UNSTARTED }); break;
@@ -230,18 +230,18 @@ const eventStateChange = (e) => {
         }
     } catch (err) {}
 };
-const eventQualityChange = (e) => {
+function eventQualityChange(e) {
     try {
         postCommand(YOUTUBE_COMMAND.FROM_IFRAME.QUALITY_CHANGE, { data: e.data });
     } catch (err) {}
 };
-const eventError = (e) => {
+var eventError = function eventError(e) {
     try {
         postCommand(YOUTUBE_COMMAND.FROM_IFRAME.ERROR, { error: e.data });
     } catch (err) {}
 };
 
-window.addEventListener("unload", () => {
+window.addEventListener("unload", function() {
     window.removeEventListener("message", handleMessage);
 });
 
