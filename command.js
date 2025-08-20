@@ -1,4 +1,4 @@
-const YOUTUBE_COMMAND = {
+var YOUTUBE_COMMAND = {
     CODE: "YOUTUBE_COMMAND",
     TO_IFRAME: {
         LOAD: "LOAD",
@@ -18,7 +18,7 @@ const YOUTUBE_COMMAND = {
     }
 };
 
-const YOUTUBE_STATE = {
+var YOUTUBE_STATE = {
     UNSTARTED: -1,
     ENDED: 0,
     PLAYING: 1,
